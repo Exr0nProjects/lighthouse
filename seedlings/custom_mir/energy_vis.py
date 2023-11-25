@@ -9,6 +9,7 @@ import time
 
 
 most_recent_mfcc = None
+S = None
 
 class Rolling_FR:
     # optm: use circular array
@@ -39,24 +40,26 @@ rolling_fr = Rolling_FR()
 
 #### mic manager via pyaudio
 # based on https://stackoverflow.com/a/62429797
+FORMAT = pyaudio.paFloat32
+CHANNELS = 1
+SAMPLERATE = 96000
+CHUNK = 1024 * 2
+
 def mic_callback(in_data, frame_count, time_info, flag):
     numpy_array = np.frombuffer(in_data, dtype=np.float32)
     print(numpy_array.shape, rolling_fr.make_sample())
-    # global most_recent_mfcc
-    # most_recent_mfcc = librosa.feature.mfcc(S=numpy_array)
+    global most_recent_mfcc, S
+    # S = librosa.feature.melspectrogram(y=numpy_array, sr=SAMPLERATE, n_mels=128, fmax=8000)
+    # most_recent_mfcc = librosa.feature.mfcc(S=librosa.power_to_db(S))
     return None, pyaudio.paContinue
 
 @contextmanager
 def make_microphone(callback):
-    FORMAT = pyaudio.paFloat32
-    CHANNELS = 1
-    RATE = 44100
-    CHUNK = 1024 * 2
 
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
-                    rate=RATE,
+                    rate=SAMPLERATE,
                     input=True,
                     output=False,
                     stream_callback=callback,
